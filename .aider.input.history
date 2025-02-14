@@ -1,0 +1,45 @@
+
+# 2025-02-14 17:11:13.810387
++/run git clone https://github.com/xiryuuGame/student-wabot.git
+
+# 2025-02-14 17:11:22.095045
++y
+
+# 2025-02-14 17:12:01.175180
++/run git init
+
+# 2025-02-14 17:12:45.302569
++i want to make it main
+
+# 2025-02-14 17:12:51.409643
++/run git branch -m master main
+
+# 2025-02-14 17:12:51.409780
++/run git branch -m master main
+
+# 2025-02-14 17:14:55.687512
++push the project to https://github.com/xiryuuGame/student-wabot.git
+
+# 2025-02-14 17:15:01.720244
++n
+
+# 2025-02-14 17:15:08.661053
++/run git remote add origin https://github.com/xiryuuGame/student-wabot.git
+
+# 2025-02-14 17:15:08.661149
++/run git remote add origin https://github.com/xiryuuGame/student-wabot.git
+
+# 2025-02-14 17:15:10.224435
++/run git push -u origin main
+
+# 2025-02-14 17:15:10.224736
++/run git push -u origin main
+
+# 2025-02-14 17:15:21.350730
++failed
+
+# 2025-02-14 17:15:26.319215
++/run git add .
+
+# 2025-02-14 17:15:26.319295
++/run git add .
