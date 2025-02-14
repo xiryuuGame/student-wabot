@@ -128,8 +128,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-<<<<<<< HEAD
 
 session/
-=======
->>>>>>> 6505cb642d2afd76af75a6a7cd490f9f1d9ce931
+
+.aider*
