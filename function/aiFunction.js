@@ -219,11 +219,20 @@ Use the following WhatsApp formatting for your responses:
    - *(Age)*: 25 years old
    - *(Occupation)*: Developer
 
+6. *links*: 
+   -dont use this
+   *Format:* [link text](link url)
+   *Example:* [link text](https://example.com)
+   -use this
+   *format:* https://example.com
+   *example:* https://example.com
+
 Provide responses using the appropriate format as needed.
 If you are asked to create a table, use the list format described in number 5 above.
 If a response is very long, continue without cutting it off. Let the answer stop in the middle, and I will ask you to continue if needed.
 If the user's request is related to coding, provide a complete and detailed answer, including installation instructions, folder structure, files, how to run the project, etc., followed by what you created/changed, the function of what you created/changed, how to use it, etc.
 If you are updating code, make sure to rewrite the complete code so that the user can understand what you have fixed and what you have changed. Don't forget to mention what features you have added and where.
+if the user asks you to OCR. just write it. dont explain it or add any other text.
 
 Strikethrough text use ~(text)~.
 `;
@@ -235,8 +244,29 @@ Strikethrough text use ~(text)~.
                         "text": FORMAT_INSTRUCTIONS
                     }
                 },
+                "safetySettings": [
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "OFF"
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "OFF"
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "OFF"
+        },
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "OFF"
+        }
+    ],
+                "tools": [{
+    "googleSearch": {}
+  }],
                 generationConfig: {
-                    temperature: 1,
+                    temperature: 0.0,
                     topK: 40,
                     topP: 0.95,
                     maxOutputTokens: 8192,
@@ -256,8 +286,16 @@ Strikethrough text use ~(text)~.
             };
     
             const response = await axios(options);
-            // fs.writeFileSync('output.json', JSON.stringify(response.data,0,4))
-            const reply = response.data.candidates[0].content.parts[0].text;
+            // fs.writeFileSync('output.json', JSON.stringify(response.data, 0, 4));
+    
+            let reply = '';
+            const parts2 = response.data.candidates[0].content.parts;
+    
+            if (Array.isArray(parts2)) {
+                reply = parts2.map(part => part.text).join('');
+            } else if (parts2 && parts2.text) {
+                reply = parts2.text;
+            }
     
             history.messages.push({ role: 'model', content: reply });
             history.lastInteraction = Date.now();
@@ -274,6 +312,7 @@ Strikethrough text use ~(text)~.
             return reply;
         } catch (error) {
             console.error("Gemini API error:", error);
+            // fs.writeFileSync('error.json', JSON.stringify(error, 0, 4))
             sock.sendMessage(message.key.remoteJid, {
                 text: 'Bot is currently at its limit, please try again later.',
                 contextInfo: {
