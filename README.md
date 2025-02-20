@@ -76,6 +76,10 @@ Bot ini menggunakan beberapa dependensi NPM, di antaranya:
    ```
    Skrip ini akan membuat direktori mata pelajaran dan menginstal dependensi yang diperlukan.
 3. **Konfigurasi variabel lingkungan (jika diperlukan).**
+   > **PENTING:** Jangan lupa untuk membuat file `.env` dan tambahkan baris berikut:
+   > ```
+   > GEMINI_API_KEY=...
+   > ```
 4. **Jalankan bot:**  
    ```bash
    npm start
