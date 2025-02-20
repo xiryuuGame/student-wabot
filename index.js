@@ -38,7 +38,7 @@ async function connectToWhatsApp() {
         generateHighQualityLinkPreview: true,
         getMessage: async (key) => {
             return {
-                conversation: 'hello'
+                conversation: 'pesan ini hanya pesan pengalihan, abaikan saja'
             }
         }
     });
