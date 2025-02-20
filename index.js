@@ -17,6 +17,7 @@ import aiFunction from './function/aiFunction.js';
 import jadwalTugas from './function/jadwaltugas.js';
 import deleteTask from './function/delete.js';
 import topdf from './function/topdf.js';
+import scrapeAndSummarize from './function/scrape.js';
 
 async function connectToWhatsApp() {
     const logger = pino({ level: 'debug' });
@@ -118,6 +119,7 @@ async function connectToWhatsApp() {
                 '!ai': { func: aiFunction, params: [msg, sock] },
                 '!delete': { func: deleteTask, params: [msg, sock]},
                 '!topdf': { func: topdf, params: [msg, sock] },
+                '!scrape': { func: scrapeAndSummarize, params: [msg, sock] },
             };
 
             Object.keys(commands).forEach((command) => {
