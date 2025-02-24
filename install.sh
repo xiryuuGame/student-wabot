@@ -2,6 +2,7 @@
 
 # Create temporary directory
 mkdir -p ./temp
+mkdir -p ./AIHistory
 
 # Install npm dependencies
 npm i
