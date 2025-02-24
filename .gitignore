@@ -132,3 +132,4 @@ dist
 session/
 .aider*
 test.js
+AIHistory/*
