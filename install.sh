@@ -7,7 +7,11 @@ mkdir -p ./AIHistory
 # Install npm dependencies
 npm i
 
+# Extract unique subjects from mapel.json
+subjects=$(jq -r 'values | flatten | unique | .[]' mapel.json)
+
 # Create directories for subjects
-for mapel in "AIJ" "ASJ" "B_INDO" "B_INGGRIS" "MTK" "MANDARIN" "PAI" "PJOK" "PKN" "RPL" "SEJARAH" "TLJ-PKK" "WAN"; do
-  mkdir -p "./function/mapel/$mapel"
+for mapel in $subjects; do
+  formatted_mapel=$(echo "$mapel" | tr ' ' '-' | tr '[:lower:]' '[:upper:]')
+  mkdir -p "./function/mapel/$formatted_mapel"
 done
