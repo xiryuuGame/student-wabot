@@ -6,7 +6,7 @@ import {
     makeCacheableSignalKeyStore,
     isJidBroadcast,
     isJidGroup,
-} from '@whiskeysockets/baileys';
+} from '@fizzxydev/baileys-pro';
 
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
@@ -14,10 +14,13 @@ import chalk from "chalk";
 import { inputFunction } from './function/input.js';
 import listTugas from './function/tugas.js';
 import aiFunction from './function/aiFunction.js';
-import jadwalTugas from './function/jadwaltugas.js';
+import jadwalTugas from './function/jadwalmapel.js';
 import deleteTask from './function/delete.js';
 import topdf from './function/topdf.js';
 import scrapeAndSummarize from './function/scrape.js';
+import test from './function/test.js';
+import jadwal from './function/jadwal.js';
+import jadwalpiket from './function/jadwalpiket.js';
 
 async function connectToWhatsApp() {
     const logger = pino({ level: 'debug' });
@@ -97,6 +100,8 @@ async function connectToWhatsApp() {
             text = msg.message.videoMessage.caption;
         } else if (msg.message?.documentWithCaptionMessage?.message?.documentMessage?.caption) {
             text = msg.message.documentWithCaptionMessage.message.documentMessage.caption;
+        } else if (msg.message?.buttonsResponseMessage?.selectedButtonId) {
+            text = msg.message.buttonsResponseMessage.selectedButtonId;
         }
 
         console.log(chalk.gray('Raw Message:'), chalk.gray(JSON.stringify(msg, null, 2)));
@@ -111,23 +116,27 @@ async function connectToWhatsApp() {
             }
         }
 
-        if (msg.key.fromMe !== true) { 
-            const commands = {
-                '!jadwal': { func: jadwalTugas, params: [msg, sock] },
-                '!input': { func: inputFunction, params: [msg, sock] },
-                '!tugas': { func: listTugas, params: [msg, sock] },
-                '!ai': { func: aiFunction, params: [msg, sock] },
-                '!delete': { func: deleteTask, params: [msg, sock]},
-                '!topdf': { func: topdf, params: [msg, sock] },
-                '!scrape': { func: scrapeAndSummarize, params: [msg, sock] },
-            };
+         
+        const commands = {
+            '!jadwal': { func: jadwal, params: [msg, sock] },
+            '!jadwalpiket': { func: jadwalpiket, params: [msg, sock] },
+            '!jadwalmapel': { func: jadwalTugas, params: [msg, sock] },
+            '!input': { func: inputFunction, params: [msg, sock] },
+            '!tugas': { func: listTugas, params: [msg, sock] },
+            '!ai': { func: aiFunction, params: [msg, sock] },
+            '!delete': { func: deleteTask, params: [msg, sock]},
+            '!topdf': { func: topdf, params: [msg, sock] },
+            '!scrape': { func: scrapeAndSummarize, params: [msg, sock] },
+            '!test': { func: test, params: [msg, sock] },
+        };
 
-            Object.keys(commands).forEach((command) => {
-                if (text.startsWith(command)) {
-                    commands[command].func(...commands[command].params);
-        }
-            });
-        }
+        Object.keys(commands).forEach((command) => {
+            const regex = new RegExp(`^${command}(\\s|$)`);
+            if (regex.test(text)) {
+                commands[command].func(...commands[command].params);
+    }
+        });
+    
     });
 
     sock.ev.on('group-participants.update', async ({ id, participants, action }) => {
