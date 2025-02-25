@@ -1,30 +1,31 @@
-const jadwalTugas = (msg, sock) => {
+import fs from 'fs';
 
-  const jadwal = {
-    Senin: ["TLJ / PKK", "B. Inggris", "ASJ"],
-    Selasa: ["RPL", "PAI", "PJOK", "MTK"],
-    Rabu: ["AIJ", "B. Inggris", "RPL", "TLJ / PKK"],
-    Kamis: ["PKN", "AIJ", "Mandarin", "Sejarah"],
-    Jumat: ["B. Indo", "WAN"],
-  };
+const jadwalTugas = (msg, sock) => {
+  // Read mapel.json file
+  const rawData = fs.readFileSync('mapel.json');
+  const jadwal = JSON.parse(rawData);
+  
 
   let response = "*JADWAL PELAJARAN*\n\n";
 
   for (const hari in jadwal) {
     response += `*${hari}:*\n`;
     jadwal[hari].forEach((pelajaran) => {
-      response += `• ${pelajaran}\n`;
+      const formattedPelajaran = pelajaran.replace(/[\s.]/g, '-').toUpperCase();
+      response += `• ${formattedPelajaran}\n`;
     });
     response += "\n";
   }
 
-  response = response.trim(); // Remove trailing newline
-  sock.sendMessage(msg.key.remoteJid, { text: response, contextInfo: {
+  response = response.trim();
+  sock.sendMessage(msg.key.remoteJid, {
+    text: response,
+    contextInfo: {
       quotedMessage: msg.message,
       stanzaId: msg.key.id,
-      participant: msg.key.participant || msg.key.remoteJid
-  } });
-
+      participant: msg.key.participant || msg.key.remoteJid,
+    },
+  });
 };
 
 export default jadwalTugas;

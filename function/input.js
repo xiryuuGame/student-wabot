@@ -1,9 +1,12 @@
 import fs from 'fs';
 import { format } from 'date-fns';
 
-const allowedSubjects = [
-    "AIJ", "ASJ", "B_INDO", "B_INGGRIS", "MTK", "MANDARIN", "PAI", "PJOK", "PKN", "RPL", "SEJARAH", "TLJ-PKK", "WAN"
-];
+// Read mapel.json file
+const rawData = fs.readFileSync('mapel.json');
+const mapelData = JSON.parse(rawData);
+
+// Extract unique subjects from mapel.json
+const allowedSubjects = [...new Set(Object.values(mapelData).flat())];
 
 export const inputFunction = (msg, sock) => {
     const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
@@ -16,9 +19,11 @@ export const inputFunction = (msg, sock) => {
         const title = match[2].trim();
         const task = match[3].trim();
         const date = format(new Date(), 'dd-MM-yyyy');
-        const filePath = `./function/mapel/${subject}/${date}.json`;
+        // Format the subject to replace spaces and dots with hyphens
+        const formattedSubject = subject.replace(/[\s.]/g, '-').toUpperCase();
+        const filePath = `./function/mapel/${formattedSubject}/${date}.json`;
 
-        if (!allowedSubjects.includes(subject.toUpperCase())) {
+        if (!allowedSubjects.includes(formattedSubject)) {
             const subjectList = allowedSubjects.map(subject => `- ${subject}`).join('\n');
             console.error(`Mata pelajaran '${subject}' tidak ditemukan. Mata pelajaran yang tersedia:\n${subjectList}`);
             sock.sendMessage(msg.key.remoteJid, { text: `Mata pelajaran '${subject}' tidak ditemukan. Mata pelajaran yang tersedia:\n${subjectList}`, contextInfo: {
@@ -37,10 +42,10 @@ export const inputFunction = (msg, sock) => {
         };
 
         try {
-            fs.mkdirSync(`./function/mapel/${subject}`, { recursive: true });
+            fs.mkdirSync(`./function/mapel/${formattedSubject}`, { recursive: true });
             fs.writeFileSync(filePath, JSON.stringify(jsonData, null, 2));
             console.log(`File JSON berhasil dibuat: ${filePath}`);
-            sock.sendMessage(msg.key.remoteJid, { text: `File JSON berhasil dibuat untuk mata pelajaran ${subject}.`, contextInfo: {
+            sock.sendMessage(msg.key.remoteJid, { text: `File JSON berhasil dibuat untuk mata pelajaran ${formattedSubject}.`, contextInfo: {
                 quotedMessage: msg.message,
                 stanzaId: msg.key.id,
                 participant: msg.key.participant || msg.key.remoteJid
