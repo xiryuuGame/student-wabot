@@ -38,12 +38,7 @@ async function connectToWhatsApp() {
             keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })), 
         },
         msgRetryCounterCache: undefined,
-        generateHighQualityLinkPreview: true,
-        getMessage: async (key) => {
-            return {
-                conversation: 'pesan ini hanya pesan pengalihan, abaikan saja'
-            }
-        }
+        generateHighQualityLinkPreview: true
     });
 
     sock.ev.on('connection.update', async (update) => {
