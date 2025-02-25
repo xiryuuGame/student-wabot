@@ -67,7 +67,7 @@ Bot ini menggunakan beberapa dependensi NPM, di antaranya:
 
 1. **Clone repository ini:**  
    ```bash
-   git clone https://github.com/username/student-wabot.git
+   git clone https://github.com/xiryuuGame/student-wabot.git
    cd student-wabot
    ```
 2. **Jalankan skrip instalasi:**  
