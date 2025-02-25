@@ -2,7 +2,7 @@ import axios from 'axios';
  import dotenv from 'dotenv';                                                   
  import fs from 'fs';                                                           
 import path from 'path';
-import { downloadMediaMessage } from '@whiskeysockets/baileys';
+import { downloadMediaMessage } from '@fizzxydev/baileys-pro';
 
 dotenv.config();
 

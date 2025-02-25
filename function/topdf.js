@@ -1,7 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import fs from 'fs/promises';
 import fsx from 'fs';
-import { downloadMediaMessage } from '@whiskeysockets/baileys';
+import { downloadMediaMessage } from '@fizzxydev/baileys-pro';
 import path from 'path';
 import Jimp from 'jimp'; // Import Jimp
 import AdmZip from 'adm-zip';
