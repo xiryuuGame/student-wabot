@@ -24,6 +24,8 @@ import scrapeAndSummarize from './function/scrape.js';
 import test from './function/test.js';
 import jadwal from './function/jadwal.js';
 import jadwalpiket from './function/jadwalpiket.js';
+import menu from './function/menu.js';
+
 
 // Constants
 const SESSION_FILE = 'session';
@@ -32,19 +34,48 @@ const SPAM_THRESHOLD = 9;
 const SPAM_COOLDOWN_DURATION = 60000; // 1 minute
 const TEMP_FILE_CLEANUP_INTERVAL = 30 * 60 * 1000; // 30 minutes
 const PAIRING_CODE_DELAY = 3000;
+const RUNTIME_START = Date.now();
+
+
+const getRuntime = () => {
+    const now = Date.now();
+    const diff = now - RUNTIME_START;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const formattedSeconds = (seconds % 60).toString().padStart(2, '0');
+    const formattedMinutes = (minutes % 60).toString().padStart(2, '0');
+    const formattedHours = (hours % 24).toString().padStart(2, '0');
+
+    if (days > 0) {
+        return `${days} days, ${formattedHours} hours, ${formattedMinutes} minutes, ${formattedSeconds} seconds`;
+    } else if (hours > 0) {
+        return `${formattedHours} hours, ${formattedMinutes} minutes, ${formattedSeconds} seconds`;
+    } else if (minutes > 0) {
+        return `${formattedMinutes} minutes, ${formattedSeconds} seconds`;
+    } else {
+        return `${formattedSeconds} seconds`;
+    }
+};
+
 
 // Command Map
+const PREFIXES = ['!', '/', '.', '\\'];
+
 const COMMANDS = {
-    '!jadwal': { func: jadwal, params: [] },
-    '!jadwalpiket': { func: jadwalpiket, params: [] },
-    '!jadwalmapel': { func: jadwalTugas, params: [] },
-    '!input': { func: inputFunction, params: [] },
-    '!tugas': { func: listTugas, params: [] },
-    '!ai': { func: aiFunction, params: [] },
-    '!delete': { func: deleteTask, params: [] },
-    '!topdf': { func: topdf, params: [] },
-    '!scrape': { func: scrapeAndSummarize, params: [] },
-    '!test': { func: test, params: [] },
+    'tugas': { func: listTugas, params: [] },
+    'input': { func: inputFunction, params: [] },
+    'delete': { func: deleteTask, params: [] },
+    'jadwal': { func: jadwal, params: [] },
+    'jadwalpiket': { func: jadwalpiket, params: [] },
+    'jadwalmapel': { func: jadwalTugas, params: [] },
+    'menu': { func: menu, params: [] },
+    'ai': { func: aiFunction, params: [] },
+    'scrape': { func: scrapeAndSummarize, params: [] },
+    'topdf': { func: topdf, params: [] },
+    'test': { func: test, params: [] },
 };
 
 // Helper Functions
@@ -58,7 +89,13 @@ const getMessageContent = (msg) => {
         message.videoMessage?.caption ||
         message.documentWithCaptionMessage?.message?.documentMessage?.caption ||
         message.buttonsResponseMessage?.selectedButtonId ||
-        '';
+        (() => {
+            try {
+                return (JSON.parse(message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson)).id;
+            } catch (e) {
+                return '';
+            }
+        })() || '';
     return content;
 };
 
@@ -162,8 +199,12 @@ async function connectToWhatsApp() {
         const formattedFrom = formatJid(from);
         const messageContent = getMessageContent(msg);
 
-        console.log(chalk.gray('Raw Message:'), chalk.gray(JSON.stringify(msg, null, 2)));
-        console.log(`[${chalk.blue(time)}][${formattedFrom}]: ${messageContent}`);
+        try {
+            console.log(chalk.gray('Raw Message:'), chalk.gray(JSON.stringify(msg, null, 2)));
+            console.log(`[${chalk.blue(time)}][${formattedFrom}]: ${messageContent}`);
+        } catch (error) {
+            console.error('Error logging message:', error);
+        }
 
         if (msg.key.fromMe) {
             const count = (messageCounts.get(from) || 0) + 1;
@@ -181,15 +222,17 @@ async function connectToWhatsApp() {
             }
         }
 
-        for (const command in COMMANDS) {
-            const regex = new RegExp(`^${command}(\\s|$)`);
-            if (regex.test(messageContent)) {
-                try {
-                    COMMANDS[command].func(msg, sock, ...COMMANDS[command].params);
-                } catch (err) {
-                    console.error(`Error executing command ${command}:`, err);
+        for (const prefix of PREFIXES) {
+            for (const command in COMMANDS) {
+                const regex = new RegExp(`^${prefix}${command}(\\s|$)`);
+                if (regex.test(messageContent)) {
+                    try {
+                        COMMANDS[command].func(msg, sock, ...COMMANDS[command].params);
+                    } catch (err) {
+                        console.error(`Error executing command ${command}:`, err);
+                    }
+                    return;
                 }
-                return;
             }
         }
     });
@@ -202,3 +245,5 @@ async function connectToWhatsApp() {
 ensureTempDirExists();
 setInterval(deleteTempFiles, TEMP_FILE_CLEANUP_INTERVAL);
 connectToWhatsApp().catch(console.error);
+
+export { COMMANDS, getRuntime };
