@@ -7,10 +7,9 @@ import {
     isJidBroadcast,
     isJidGroup,
 } from '@fizzxydev/baileys-pro';
-
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
-import chalk from "chalk";
+import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 
@@ -32,56 +31,7 @@ const TEMP_DIR = './temp';
 const SPAM_THRESHOLD = 9;
 const SPAM_COOLDOWN_DURATION = 60000; // 1 minute
 const TEMP_FILE_CLEANUP_INTERVAL = 30 * 60 * 1000; // 30 minutes
-
-// Helper Functions
-/**
- * get message content
- * @param {Object} msg Message object
- * @returns {String} Message Content
- */
-const getMessageContent = (msg) => {
-    if (msg.message?.conversation) return msg.message.conversation;
-    if (msg.message?.extendedTextMessage?.text) return msg.message.extendedTextMessage.text;
-    if (msg.message?.imageMessage?.caption) return msg.message.imageMessage.caption;
-    if (msg.message?.videoMessage?.caption) return msg.message.videoMessage.caption;
-    if (msg.message?.documentWithCaptionMessage?.message?.documentMessage?.caption) return msg.message.documentWithCaptionMessage.message.documentMessage.caption;
-    if (msg.message?.buttonsResponseMessage?.selectedButtonId) return msg.message.buttonsResponseMessage.selectedButtonId;
-    return '';
-};
-
-/**
- * Delete files from the temp directory
- */
-const deleteTempFiles = () => {
-    try {
-        if (fs.existsSync(TEMP_DIR)) {
-            fs.readdirSync(TEMP_DIR).forEach((file) => {
-                const filePath = path.join(TEMP_DIR, file);
-                fs.unlinkSync(filePath);
-                console.log(`Deleted file: ${filePath}`);
-            });
-            console.log('All files in ./temp have been deleted.');
-        } else {
-            console.log('./temp directory does not exist.');
-        }
-    } catch (error) {
-        console.error('Error deleting temp files:', error);
-    }
-};
-
-/**
- * create temp directory if it does not exist
- */
-const ensureTempDirExists = () => {
-    if (!fs.existsSync(TEMP_DIR)) {
-        try {
-            fs.mkdirSync(TEMP_DIR);
-            console.log('./temp directory created.');
-        } catch (error) {
-            console.error('Error creating temp directory:', error);
-        }
-    }
-};
+const PAIRING_CODE_DELAY = 3000;
 
 // Command Map
 const COMMANDS = {
@@ -97,8 +47,59 @@ const COMMANDS = {
     '!test': { func: test, params: [] },
 };
 
+// Helper Functions
+const getMessageContent = (msg) => {
+    const message = msg.message;
+    if (!message) return '';
+
+    const content = message.conversation ||
+        message.extendedTextMessage?.text ||
+        message.imageMessage?.caption ||
+        message.videoMessage?.caption ||
+        message.documentWithCaptionMessage?.message?.documentMessage?.caption ||
+        message.buttonsResponseMessage?.selectedButtonId ||
+        '';
+    return content;
+};
+
+const deleteTempFiles = () => {
+    if (!fs.existsSync(TEMP_DIR)) {
+        console.log('./temp directory does not exist.');
+        return;
+    }
+
+    try {
+        fs.readdirSync(TEMP_DIR).forEach((file) => {
+            const filePath = path.join(TEMP_DIR, file);
+            fs.unlinkSync(filePath);
+            console.log(`Deleted file: ${filePath}`);
+        });
+        console.log('All files in ./temp have been deleted.');
+    } catch (error) {
+        console.error('Error deleting temp files:', error);
+    }
+};
+
+const ensureTempDirExists = () => {
+    if (!fs.existsSync(TEMP_DIR)) {
+        try {
+            fs.mkdirSync(TEMP_DIR);
+            console.log('./temp directory created.');
+        } catch (error) {
+            console.error('Error creating temp directory:', error);
+        }
+    }
+};
+
+const formatJid = (jid) => {
+    if (isJidBroadcast(jid)) return chalk.magenta('Broadcast');
+    if (isJidGroup(jid)) return chalk.cyan('Group:') + chalk.cyan(jid);
+    if (jid.endsWith('@status')) return chalk.yellow('Status');
+    return chalk.green(jid);
+};
+
 async function connectToWhatsApp() {
-    const logger = pino({ level: 'debug' });
+    const logger = pino({ level: 'silent' });
     const { version, isLatest } = await fetchLatestBaileysVersion();
     console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
@@ -106,25 +107,35 @@ async function connectToWhatsApp() {
 
     const sock = makeWASocket({
         version,
-        logger: pino({ level: 'silent' }),
-        printQRInTerminal: true,
+        logger,
+        printQRInTerminal: false,
         auth: {
             creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })),
+            keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        msgRetryCounterCache: undefined,
-        generateHighQualityLinkPreview: true
+        generateHighQualityLinkPreview: true,
     });
+
+    if (!sock.authState.creds.registered) {
+        const rawData = fs.readFileSync('nomor.json');
+        const phoneNumber = JSON.parse(rawData)[0].replace(/\D/g, '');
+        setTimeout(async () => {
+            let code = await sock.requestPairingCode(phoneNumber);
+            code = code?.match(/.{1,4}/g)?.join('-') || code;
+            console.log(chalk.black(chalk.bgGreen('Your pairing code : ')), chalk.black(chalk.white(code)));
+        }, PAIRING_CODE_DELAY);
+    }
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         console.log('connection update', update);
+
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error instanceof Boom && lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
             console.error('Connection Closed:', lastDisconnect?.error || 'Unknown Reason');
             if (shouldReconnect) {
                 console.log('Attempting to reconnect...');
-                await connectToWhatsApp();
+                connectToWhatsApp().catch(console.error);
             } else {
                 console.log('Connection closed. You are logged out or an unrecoverable error occurred.');
             }
@@ -134,41 +145,29 @@ async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 
     const messageCounts = new Map();
-    const spamCooldowns = new Map(); // New: Track cooldowns
+    const spamCooldowns = new Map();
 
-    // Clear message counts and spam cooldowns
     setInterval(() => {
         messageCounts.clear();
         spamCooldowns.clear();
     }, 60000);
 
     sock.ev.on('messages.upsert', async (m) => {
-        if (m.type === 'append') return;
+        if (m.type === 'append' || !m.messages) return;
         const msg = m.messages[0];
         if (!msg.message) return;
 
         const time = new Date(msg.messageTimestamp * 1000).toLocaleTimeString();
-        let from = msg.key.remoteJid;
-
-        // Format the "from" information for the console log
-        if (isJidBroadcast(from)) {
-            from = chalk.magenta('Broadcast');
-        } else if (isJidGroup(from)) {
-            from = chalk.cyan('Group:') + chalk.cyan(from);
-        } else if (from.endsWith('@status')) {
-            from = chalk.yellow("Status");
-        } else {
-            from = chalk.green(from);
-        }
-
+        const from = msg.key.remoteJid;
+        const formattedFrom = formatJid(from);
         const messageContent = getMessageContent(msg);
-        console.log(chalk.gray('Raw Message:'), chalk.gray(JSON.stringify(msg, null, 2)));
-        console.log(`[${chalk.blue(time)}][${from}]: ${messageContent}`);
 
-        // Check for spam
+        console.log(chalk.gray('Raw Message:'), chalk.gray(JSON.stringify(msg, null, 2)));
+        console.log(`[${chalk.blue(time)}][${formattedFrom}]: ${messageContent}`);
+
         if (msg.key.fromMe) {
-            const count = messageCounts.get(from) || 0;
-            messageCounts.set(from, count + 1);
+            const count = (messageCounts.get(from) || 0) + 1;
+            messageCounts.set(from, count);
 
             if (count >= SPAM_THRESHOLD) {
                 const lastSpamTime = spamCooldowns.get(from) || 0;
@@ -176,35 +175,30 @@ async function connectToWhatsApp() {
 
                 if (currentTime - lastSpamTime < SPAM_COOLDOWN_DURATION) {
                     console.log(chalk.red(`Spam detected from ${from} - Bot is in cooldown!`));
-                    return; 
-                } else {
-                    spamCooldowns.set(from, currentTime);
+                    return;
                 }
+                spamCooldowns.set(from, currentTime);
             }
         }
 
-        // Dynamic command handling
         for (const command in COMMANDS) {
             const regex = new RegExp(`^${command}(\\s|$)`);
             if (regex.test(messageContent)) {
                 try {
-                    COMMANDS[command].func(...[msg, sock, ...COMMANDS[command].params]);
-                } catch (err){
+                    COMMANDS[command].func(msg, sock, ...COMMANDS[command].params);
+                } catch (err) {
                     console.error(`Error executing command ${command}:`, err);
                 }
-                return; //Stop searching for commands
+                return;
             }
         }
     });
 
     sock.ev.on('group-participants.update', async ({ id, participants, action }) => {
-        console.log(`Group ${id} - Participants ${action}:\n`, participants)
-    })
+        console.log(`Group ${id} - Participants ${action}:\n`, participants);
+    });
 }
 
-// Initialize
 ensureTempDirExists();
 setInterval(deleteTempFiles, TEMP_FILE_CLEANUP_INTERVAL);
-connectToWhatsApp().catch((error) => {
-    console.error("An unexpected error occurred:", error);
-});
+connectToWhatsApp().catch(console.error);
