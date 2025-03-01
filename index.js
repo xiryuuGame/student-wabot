@@ -12,7 +12,7 @@ import { Boom } from '@hapi/boom';
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
-// dasdgkadkadh
+
 // Import Command functions
 import { inputFunction } from './function/input.js';
 import listTugas from './function/tugas.js';
