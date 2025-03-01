@@ -93,6 +93,7 @@ const aiFunction = async (message, sock) => {
         let imageBase64 = null;
         let messageText = message.message?.conversation ||
             message.message?.extendedTextMessage?.text || '';
+        messageText = messageText.replace('.ai ', '')
     
         if (message.message?.imageMessage) {
             try {

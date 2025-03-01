@@ -198,6 +198,7 @@ async function connectToWhatsApp() {
         const from = msg.key.remoteJid;
         const formattedFrom = formatJid(from);
         const messageContent = getMessageContent(msg);
+        const messageContentLower = messageContent.toLowerCase();
 
         try {
             console.log(chalk.gray('Raw Message:'), chalk.gray(JSON.stringify(msg, null, 2)));
@@ -222,10 +223,21 @@ async function connectToWhatsApp() {
             }
         }
 
+        let isCommand = false;
+        let usedPrefix = '';
+
         for (const prefix of PREFIXES) {
+            if (messageContentLower.startsWith(prefix)) {
+                isCommand = true;
+                usedPrefix = prefix;
+                break;
+            }
+        }
+
+        if (isCommand) {
             for (const command in COMMANDS) {
-                const regex = new RegExp(`^${prefix}${command}(\\s|$)`);
-                if (regex.test(messageContent)) {
+                const regex = new RegExp(`^${usedPrefix}${command}(\\s|$)`);
+                if (regex.test(messageContentLower)) {
                     try {
                         COMMANDS[command].func(msg, sock, ...COMMANDS[command].params);
                     } catch (err) {
