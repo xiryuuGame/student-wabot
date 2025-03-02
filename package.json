@@ -12,7 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@fizzxydev/baileys-pro": "^8.5.12",
+    "@fizzxydev/baileys-pro": "^8.6.8",
     "@hapi/boom": "^10.0.1",
     "adm-zip": "^0.5.16",
     "axios": "^1.7.9",
