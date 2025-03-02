@@ -258,6 +258,29 @@ async function connectToWhatsApp() {
       console.log(admin);
       console.log(all);
 
+      if (messageContentLower.includes("@admin") && messageContentLower.includes("@everyone")){
+        //if user not in admin and not 6289650943134 or 62895622331910, return
+        if (
+          !admin.includes(user) &&
+          user !== "6289650943134@s.whatsapp.net" &&
+          user !== "62895622331910@s.whatsapp.net"
+        ) {
+          await sock.sendMessage(
+            from,
+            { text: "hanya admin yang bisa menggunakan @admin dan @everyone secara bersamaan" },
+            { quoted: msg }
+          );
+          return;
+        }
+        const response = messageContentLower.replace(/s*(@admin)s*/i, " ").replace(/s*(@everyone)s*/i, " ");
+        await sock.sendMessage(
+          from,
+          { text: response, mentions: all },
+          { quoted: msg }
+        );
+        return;
+      }
+
       if (messageContentLower.includes("@admin")) {
         const response = messageContentLower.replace(/s*(@admin)s*/i, " ");
         await sock.sendMessage(
