@@ -25,6 +25,7 @@ import test from "./function/test.js";
 import jadwal from "./function/jadwal.js";
 import jadwalpiket from "./function/jadwalpiket.js";
 import menu from "./function/menu.js";
+import { readIgnoreList, writeIgnoreList } from "./function/ignore.js";
 
 // Constants
 const SESSION_FILE = "session";
@@ -312,9 +313,53 @@ async function connectToWhatsApp() {
       }
       return;
     }
+    
+    if (
+      (user === "6289650943134@s.whatsapp.net" ||
+        user === "62895622331910@s.whatsapp.net") &&
+      (messageContentLower === "/ignoreit" || messageContentLower === "/activeit")
+    ) {
+      if (messageContentLower === "/ignoreit") {
+        const ignoreList = await readIgnoreList();
+        if (!ignoreList.includes(from)) {
+          ignoreList.push(from);
+          await writeIgnoreList(ignoreList);
+          await sock.sendMessage(from, {
+            text: `Menambahkan obrolan ini ke daftar ignore.`,
+          });
+        } else {
+          await sock.sendMessage(from, {
+            text: `Obrolan ini sudah ada di daftar ignore.`,
+          });
+        }
+      } else if (messageContentLower === "/activeit") {
+        const ignoreList = await readIgnoreList();
+        if (ignoreList.includes(from)) {
+          const index = ignoreList.indexOf(from);
+          ignoreList.splice(index, 1);
+          await writeIgnoreList(ignoreList);
+          await sock.sendMessage(from, {
+            text: `Menghapus obrolan ini dari daftar ignore.`,
+          });
+        } else {
+          await sock.sendMessage(from, {
+            text: `Obrolan ini tidak ada di daftar ignore.`,
+          });
+        }
+      }
+      return;
+    }
+    
+    // Ignore logic
+    const ignoreList = await readIgnoreList();
+    if (ignoreList.includes(from)) {
+      console.log(`Skipping message from ignored JID: ${from}`);
+      return;
+    }
 
     let isCommand = false;
     let usedPrefix = "";
+    
 
     for (const prefix of PREFIXES) {
       if (messageContentLower.startsWith(prefix)) {
