@@ -4,7 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node ."
+    "start": "node .",
+    "pm2": "pm2 start ecosystem.config.js --watch"
   },
   "keywords": [],
   "author": "",
