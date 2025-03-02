@@ -1,10 +1,10 @@
 import fs from 'fs'
 
-const jadwalpiket = (msg, sock) => {
+const jadwalpiket = (msg, sock, messageContent) => {
     try {
         const password = 'hahahihi'
-        const msg = msg.message.conversation || msg.message.extendedTextMessage.text || msg.message.imageMessage.caption || msg.message.videoMessage.caption || msg.message.documentWithCaptionMessage.message.documentMessage.caption || msg.message.buttonsResponseMessage.selectedButtonId || msg.message.listResponseMessage.singleSelectReply.selectedRowId
-        if(msg.includes(password)){
+        console.log(messageContent);
+        if(!messageContent.includes(password)){
             const response = 'kamu harus memberi password, dikarenakan ini berisi banyak data pribadi seseorang.'
             sock.sendMessage(msg.key.remoteJid, {text: response}, {quoted: msg})
             return;

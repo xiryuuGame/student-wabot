@@ -306,7 +306,7 @@ async function connectToWhatsApp() {
         const regex = new RegExp(`^${usedPrefix}${command}(\\s|$)`);
         if (regex.test(messageContentLower)) {
           try {
-            COMMANDS[command].func(msg, sock, ...COMMANDS[command].params);
+            COMMANDS[command].func(msg, sock, messageContent, ...COMMANDS[command].params);
           } catch (err) {
             console.error(`Error executing command ${command}:`, err);
           }
