@@ -1,12 +1,4 @@
-import {
-  makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore,
-  isJidBroadcast,
-  isJidGroup,
-} from "@fizzxydev/baileys-pro";
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, isJidBroadcast, isJidGroup } from "@fizzxydev/baileys-pro";
 import pino from "pino";
 import { Boom } from "@hapi/boom";
 import chalk from "chalk";
@@ -90,10 +82,7 @@ const getMessageContent = (msg) => {
     message.buttonsResponseMessage?.selectedButtonId ||
     (() => {
       try {
-        return JSON.parse(
-          message.interactiveResponseMessage?.nativeFlowResponseMessage
-            ?.paramsJson
-        ).id;
+        return JSON.parse(message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson).id;
       } catch (e) {
         return "";
       }
@@ -162,10 +151,7 @@ async function connectToWhatsApp() {
     setTimeout(async () => {
       let code = await sock.requestPairingCode(phoneNumber);
       code = code?.match(/.{1,4}/g)?.join("-") || code;
-      console.log(
-        chalk.black(chalk.bgGreen("Your pairing code : ")),
-        chalk.black(chalk.white(code))
-      );
+      console.log(chalk.black(chalk.bgGreen("Your pairing code : ")), chalk.black(chalk.white(code)));
     }, PAIRING_CODE_DELAY);
   }
 
@@ -174,20 +160,13 @@ async function connectToWhatsApp() {
     console.log("connection update", update);
 
     if (connection === "close") {
-      const shouldReconnect =
-        lastDisconnect?.error instanceof Boom &&
-        lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.error(
-        "Connection Closed:",
-        lastDisconnect?.error || "Unknown Reason"
-      );
+      const shouldReconnect = lastDisconnect?.error instanceof Boom && lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      console.error("Connection Closed:", lastDisconnect?.error || "Unknown Reason");
       if (shouldReconnect) {
         console.log("Attempting to reconnect...");
         connectToWhatsApp().catch(console.error);
       } else {
-        console.log(
-          "Connection closed. You are logged out or an unrecoverable error occurred."
-        );
+        console.log("Connection closed. You are logged out or an unrecoverable error occurred.");
       }
     }
   });
@@ -215,10 +194,7 @@ async function connectToWhatsApp() {
     const messageContentLower = messageContent.toLowerCase();
 
     try {
-      console.log(
-        chalk.gray("Raw Message:"),
-        chalk.gray(JSON.stringify(msg, null, 2))
-      );
+      console.log(chalk.gray("Raw Message:"), chalk.gray(JSON.stringify(msg, null, 2)));
       console.log(`[${chalk.blue(time)}][${formattedFrom}]: ${messageContent}`);
     } catch (error) {
       console.error("Error logging message:", error);
@@ -233,92 +209,52 @@ async function connectToWhatsApp() {
         const currentTime = Date.now();
 
         if (currentTime - lastSpamTime < SPAM_COOLDOWN_DURATION) {
-          console.log(
-            chalk.red(`Spam detected from ${from} - Bot is in cooldown!`)
-          );
+          console.log(chalk.red(`Spam detected from ${from} - Bot is in cooldown!`));
           return;
         }
         spamCooldowns.set(from, currentTime);
       }
     }
 
-    if (
-      (messageContentLower.includes("@admin") ||
-        messageContentLower.includes("@everyone")) &&
-      from.includes("@g.us")
-    ) {
+    if ((messageContentLower.includes("@admin") || messageContentLower.includes("@everyone")) && from.includes("@g.us")) {
       console.log("test");
 
       const grupInfo = await sock.groupMetadata(from);
       console.log(grupInfo);
 
-      const admin = grupInfo.participants
-        .filter((v) => v.admin !== null)
-        .map((v) => v.id);
+      const admin = grupInfo.participants.filter((v) => v.admin !== null).map((v) => v.id);
       const all = grupInfo.participants.map((v) => v.id);
       console.log(admin);
       console.log(all);
 
-      if (messageContentLower.includes("@admin") && messageContentLower.includes("@everyone")){
+      if (messageContentLower.includes("@admin") && messageContentLower.includes("@everyone")) {
         //if user not in admin and not 6289650943134 or 62895622331910, return
-        if (
-          !admin.includes(user) &&
-          user !== "6289650943134@s.whatsapp.net" &&
-          user !== "62895622331910@s.whatsapp.net"
-        ) {
-          await sock.sendMessage(
-            from,
-            { text: "hanya admin yang bisa menggunakan @admin dan @everyone secara bersamaan" },
-            { quoted: msg }
-          );
+        if (!admin.includes(user) && user !== "6289650943134@s.whatsapp.net" && user !== "62895622331910@s.whatsapp.net") {
+          await sock.sendMessage(from, { text: "hanya admin yang bisa menggunakan @admin dan @everyone secara bersamaan" }, { quoted: msg });
           return;
         }
         const response = messageContentLower.replace(/s*(@admin)s*/i, " ").replace(/s*(@everyone)s*/i, " ");
-        await sock.sendMessage(
-          from,
-          { text: response, mentions: all },
-          { quoted: msg }
-        );
+        await sock.sendMessage(from, { text: response, mentions: all }, { quoted: msg });
         return;
       }
 
       if (messageContentLower.includes("@admin")) {
         const response = messageContentLower.replace(/s*(@admin)s*/i, " ");
-        await sock.sendMessage(
-          from,
-          { text: response, mentions: admin },
-          { quoted: msg }
-        );
+        await sock.sendMessage(from, { text: response, mentions: admin }, { quoted: msg });
       }
       if (messageContentLower.includes("@everyone")) {
         //if user not in admin and not 6289650943134 or 62895622331910, return
-        if (
-          !admin.includes(user) &&
-          user !== "6289650943134@s.whatsapp.net" &&
-          user !== "62895622331910@s.whatsapp.net"
-        ) {
-          await sock.sendMessage(
-            from,
-            { text: "hanya admin yang bisa menggunakan @everyone" },
-            { quoted: msg }
-          );
+        if (!admin.includes(user) && user !== "6289650943134@s.whatsapp.net" && user !== "62895622331910@s.whatsapp.net") {
+          await sock.sendMessage(from, { text: "hanya admin yang bisa menggunakan @everyone" }, { quoted: msg });
           return;
         }
         const response = messageContentLower.replace(/s*(@everyone)s*/i, " ");
-        await sock.sendMessage(
-          from,
-          { text: response, mentions: all },
-          { quoted: msg }
-        );
+        await sock.sendMessage(from, { text: response, mentions: all }, { quoted: msg });
       }
       return;
     }
-    
-    if (
-      (user === "6289650943134@s.whatsapp.net" ||
-        user === "62895622331910@s.whatsapp.net") &&
-      (messageContentLower === "/ignoreit" || messageContentLower === "/activeit")
-    ) {
+
+    if ((user === "6289650943134@s.whatsapp.net" || user === "62895622331910@s.whatsapp.net") && (messageContentLower === "/ignoreit" || messageContentLower === "/activeit")) {
       if (messageContentLower === "/ignoreit") {
         const ignoreList = await readIgnoreList();
         if (!ignoreList.includes(from)) {
@@ -349,7 +285,7 @@ async function connectToWhatsApp() {
       }
       return;
     }
-    
+
     // Ignore logic
     const ignoreList = await readIgnoreList();
     if (ignoreList.includes(from)) {
@@ -359,7 +295,6 @@ async function connectToWhatsApp() {
 
     let isCommand = false;
     let usedPrefix = "";
-    
 
     for (const prefix of PREFIXES) {
       if (messageContentLower.startsWith(prefix)) {
@@ -384,12 +319,9 @@ async function connectToWhatsApp() {
     }
   });
 
-  sock.ev.on(
-    "group-participants.update",
-    async ({ id, participants, action }) => {
-      console.log(`Group ${id} - Participants ${action}:\n`, participants);
-    }
-  );
+  sock.ev.on("group-participants.update", async ({ id, participants, action }) => {
+    console.log(`Group ${id} - Participants ${action}:\n`, participants);
+  });
 }
 
 ensureTempDirExists();
