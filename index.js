@@ -1,3 +1,12 @@
+// Define global owners
+global.owner = ["6289650943134", "62895622331910"];
+
+// Function to check if the sender is an owner
+const isOwner = (sender) => {
+  const formattedSender = sender.replace(/[^0-9]/g, "");
+  return global.owner.includes(formattedSender);
+};
+
 import {
   makeWASocket,
   useMultiFileAuthState,
@@ -21,7 +30,7 @@ import jadwalTugas from "./function/jadwalmapel.js";
 import deleteTask from "./function/delete.js";
 import topdf from "./function/topdf.js";
 import scrapeAndSummarize from "./function/scrape.js";
-import test from "./function/test.js";
+// import test from "./function/test.js";
 import jadwal from "./function/jadwal.js";
 import jadwalpiket from "./function/jadwalpiket.js";
 import menu from "./function/menu.js";
@@ -73,7 +82,7 @@ const COMMANDS = {
   ai: { func: aiFunction, params: [] },
   scrape: { func: scrapeAndSummarize, params: [] },
   topdf: { func: topdf, params: [] },
-  test: { func: test, params: [] },
+  // test: { func: test, params: [] },
 };
 
 // Helper Functions
@@ -208,12 +217,30 @@ async function connectToWhatsApp() {
     const msg = m.messages[0];
     if (!msg.message) return;
 
-    const time = new Date(msg.messageTimestamp * 1000).toLocaleTimeString();
-    const from = msg.key.remoteJid;
-    const user = msg.participant || msg.key.participant || msg.key.remoteJid;
-    const formattedFrom = formatJid(from);
     const messageContent = getMessageContent(msg);
     const messageContentLower = messageContent.toLowerCase();
+
+    // Check if group is in AI active list and handle AI response
+    const filePath = "./function/db/aiactive.json";
+    let aiActiveGroup = [];
+    try {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      aiActiveGroup = JSON.parse(fileContent);
+    } catch (error) {
+      console.error("Error reading aiactive.json:", error);
+    }
+
+    const from = msg.key.remoteJid;
+    if (from.includes("@g.us") && aiActiveGroup.includes(from)) {
+      if (messageContentLower !== "/toggle") {
+        aiFunction(msg, sock, "toggle");
+        return; // Skip command processing for AI active groups, except for /toggle
+      }
+    }
+
+    const time = new Date(msg.messageTimestamp * 1000).toLocaleTimeString();
+    const user = msg.participant || msg.key.participant || msg.key.remoteJid;
+    const formattedFrom = formatJid(from);
 
     try {
       console.log(
@@ -265,11 +292,7 @@ async function connectToWhatsApp() {
         messageContentLower.includes("@everyone")
       ) {
         //if user not in admin and not 6289650943134 or 62895622331910, return
-        if (
-          !admin.includes(user) &&
-          user !== "6289650943134@s.whatsapp.net" &&
-          user !== "62895622331910@s.whatsapp.net"
-        ) {
+        if (!admin.includes(user) && !isOwner(user)) {
           await sock.sendMessage(
             from,
             {
@@ -300,11 +323,7 @@ async function connectToWhatsApp() {
       }
       if (messageContentLower.includes("@everyone")) {
         //if user not in admin and not 6289650943134 or 62895622331910, return
-        if (
-          !admin.includes(user) &&
-          user !== "6289650943134@s.whatsapp.net" &&
-          user !== "62895622331910@s.whatsapp.net"
-        ) {
+        if (!admin.includes(user) && !isOwner(user)) {
           await sock.sendMessage(
             from,
             { text: "hanya admin yang bisa menggunakan @everyone" },
@@ -322,9 +341,39 @@ async function connectToWhatsApp() {
       return;
     }
 
+    // Check if the sender is an owner
+    const senderIsOwner = isOwner(user);
+
+    if (senderIsOwner && messageContentLower === "/toggle") {
+      const filePath = "./function/db/aiactive.json";
+      try {
+        let aiActiveGroup = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+        const groupId = from; // Assuming 'from' contains the group ID
+
+        if (aiActiveGroup.includes(groupId)) {
+          aiActiveGroup = aiActiveGroup.filter((id) => id !== groupId);
+          fs.writeFileSync(filePath, JSON.stringify(aiActiveGroup, null, 2));
+          await sock.sendMessage(from, {
+            text: `Group removed from AI active list.`,
+          });
+        } else {
+          aiActiveGroup.push(groupId);
+          fs.writeFileSync(filePath, JSON.stringify(aiActiveGroup, null, 2));
+          await sock.sendMessage(from, {
+            text: `Group added to AI active list.`,
+          });
+        }
+      } catch (error) {
+        console.error("Error toggling AI active group:", error);
+        await sock.sendMessage(from, {
+          text: `An error occurred while toggling AI active status.`,
+        });
+      }
+      return; // Important to prevent further command processing
+    }
+
     if (
-      (user === "6289650943134@s.whatsapp.net" ||
-        user === "62895622331910@s.whatsapp.net") &&
+      isOwner(user) &&
       (messageContentLower === "/ignoreit" ||
         messageContentLower === "/activeit")
     ) {
@@ -366,6 +415,7 @@ async function connectToWhatsApp() {
       return;
     }
 
+    // Command processing logic (only if not handled by AI above)
     let isCommand = false;
     let usedPrefix = "";
 
@@ -381,6 +431,7 @@ async function connectToWhatsApp() {
       for (const command in COMMANDS) {
         const regex = new RegExp(`^${usedPrefix}${command}(\\s|$)`);
         if (regex.test(messageContentLower)) {
+          const mode = "normal";
           try {
             COMMANDS[command].func(
               msg,
