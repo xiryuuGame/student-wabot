@@ -1,120 +1,155 @@
 # Student-WABot
 
-Student-WABot adalah bot WhatsApp yang dirancang khusus untuk membantu siswa dalam mengelola tugas sekolah. Bot ini memiliki berbagai fitur seperti manajemen tugas, scraping informasi dari situs web, serta konversi data ke format PDF.
+Student-WABot adalah bot WhatsApp yang dirancang khusus untuk membantu siswa mengelola tugas sekolah dengan lebih efisien. Dengan berbagai fitur canggih, bot ini membantu mengorganisir tugas, mengambil informasi secara otomatis dari web, serta mengonversi data ke dalam format PDF. Solusi tepat untuk mendukung aktivitas belajar dan mengatur jadwal harian!
 
 ---
 
 ## ✨ Fitur Utama
 
-### 🔹 Integrasi WhatsApp
-Menggunakan library `@whiskeysockets/baileys` untuk berkomunikasi dengan WhatsApp.
+- **Integrasi WhatsApp**  
+  Menggunakan library [`@whiskeysockets/baileys`](https://github.com/whiskeysockets/baileys) untuk komunikasi real-time dengan WhatsApp.
 
-### 📚 Manajemen Tugas
-Mengelola tugas sekolah, termasuk menambahkan, menghapus, dan menampilkan tugas.
-- 📌 **Tambah tugas**
-- 🗑 **Hapus tugas**
-- 📅 **Jadwal tugas**
+- **Manajemen Tugas**  
+  Menyediakan fitur untuk:
+  - Menambahkan tugas
+  - Menghapus tugas
+  - Menampilkan jadwal tugas  
+  *(Implementasi di `function/tugas.js`, `function/jadwaltugas.js`, dan `function/delete.js`)*
 
-(Fungsi ini terdapat di `function/tugas.js`, `function/jadwaltugas.js`, `function/delete.js`)
+- **Pengelompokan Berdasarkan Mata Pelajaran**  
+  Tugas diorganisir dalam direktori sesuai mata pelajaran (misal: AIJ, ASJ, B_INDO, dll) untuk memudahkan pencarian dan pengelolaan.
 
-### 📌 Pengelompokan Berdasarkan Mata Pelajaran
-Bot ini mengorganisir tugas berdasarkan mata pelajaran dengan membuat direktori untuk masing-masing, seperti **AIJ**, **ASJ**, **B\_INDO**, dll.
+- **Web Scraping**  
+  Mengambil data dan informasi dari situs web untuk membantu menyelesaikan tugas secara otomatis.  
+  *(Fitur terdapat di `function/scrape.js`)*
 
-### 🌍 Web Scraping
-Mengambil informasi dari situs web untuk membantu mengerjakan tugas secara otomatis.
-(Fitur ini terdapat di `function/scrape.js`)
+- **Konversi ke PDF**  
+  Mengubah konten atau data menjadi format PDF, memudahkan distribusi dan dokumentasi.  
+  *(Fitur terdapat di `function/topdf.js`)*
 
-### 📄 Konversi ke PDF
-Mengubah data atau konten ke dalam format PDF.
-(Fitur ini terdapat di `function/topdf.js`)
+- **Pemrosesan Gambar**  
+  Mendownload dan memproses gambar yang dikirim melalui pesan, termasuk integrasi fungsi AI.  
+  *(Fitur terdapat di `function/aiFunction.js`)*
 
-### 🖼 Pemrosesan Gambar
-Mendownload dan memproses gambar dari pesan yang dikutip.
-(Fitur ini terdapat di `function/aiFunction.js`)
+- **Pemrosesan Input**  
+  Mengelola dan menafsirkan perintah pengguna secara efisien.  
+  *(Fitur terdapat di `function/input.js`)*
 
-### 📝 Pemrosesan Input
-Mengelola input dari pengguna dan memahami perintah.
-(Fitur ini terdapat di `function/input.js`)
+- **Fungsi Utilitas**  
+  Kumpulan fungsi pendukung untuk memastikan kinerja bot optimal.  
+  *(Terdapat di `function/utils.js`)*
 
-### 🔧 Fungsi Utilitas
-Berisi berbagai fungsi tambahan yang mendukung kinerja bot.
-(Fitur ini terdapat di `function/utils.js`)
-
-### 🤖 Fitur AI
-Memungkinkan adanya fitur berbasis kecerdasan buatan.
-(Fitur ini terdapat di `function/aiFunction.js`)
-
----
-
-## 📦 Dependencies
-Bot ini menggunakan beberapa dependensi NPM, di antaranya:
-
-- `@hapi/boom` → Untuk menangani error HTTP
-- `@whiskeysockets/baileys` → Untuk integrasi dengan WhatsApp
-- `adm-zip` → Untuk menangani arsip ZIP
-- `axios` → Untuk melakukan permintaan HTTP
-- `chalk` → Untuk menampilkan warna pada output terminal
-- `cheerio` → Untuk parsing HTML (web scraping)
-- `date-fns` → Untuk manipulasi tanggal
-- `dotenv` → Untuk memuat variabel lingkungan
-- `jimp` → Untuk pemrosesan gambar
-- `pdf-lib` → Untuk pembuatan dan manipulasi PDF
-- `qrcode-terminal` → Untuk menampilkan kode QR di terminal
+- **Fitur AI**  
+  Menyediakan kemampuan berbasis kecerdasan buatan untuk meningkatkan interaksi dan respon bot.  
+  *(Diimplementasikan di `function/aiFunction.js`)*
 
 ---
 
-## 🛠 Instalasi
+## 🚀 Instalasi
 
-1. **Clone repository ini:**  
+Ikuti langkah-langkah berikut untuk menginstal dan menjalankan Student-WABot:
+
+1. **Clone Repository:**
+
    ```bash
    git clone https://github.com/xiryuuGame/student-wabot.git
    cd student-wabot
    ```
-2. **Jalankan skrip instalasi:**  
+
+2. **Jalankan Skrip Instalasi:**
+
    ```bash
    bash install.sh
    ```
-   Skrip ini akan membuat direktori mata pelajaran dan menginstal dependensi yang diperlukan.
-3. **Konfigurasi variabel lingkungan (jika diperlukan).**
-   > **PENTING:** Jangan lupa untuk membuat file `.env` dan tambahkan baris berikut:
-   > ```
-   > GEMINI_API_KEY=...
-   > ```
-4. **Jalankan bot:**  
+
+   Skrip ini akan membuat direktori mata pelajaran dan menginstal seluruh dependensi yang diperlukan.
+
+3. **Konfigurasi Variabel Lingkungan:**
+
+   Buat file `.env` dan tambahkan baris berikut (sesuaikan dengan API key Anda):
+
+   ```env
+   GEMINI_API_KEY=...
+   ```
+
+4. **Jalankan Bot:**
+
    ```bash
    npm start
    ```
 
 ---
 
-## 📂 Struktur Direktori
+## 🗂️ Struktur Direktori
+
 ```
-bot-wa/
-├── README.md             # File dokumentasi ini
-├── ecosystem.config.cjs  # Konfigurasi PM2
-├── index.js              # File utama aplikasi
-├── install.sh            # Skrip instalasi
-├── package.json          # File dependensi proyek
-├── function/             # Direktori yang berisi fungsi bot
-│   ├── aiFunction.js     # Fungsi berbasis AI
-│   ├── delete.js         # Fungsi untuk menghapus tugas/data
+student-wabot/
+├── README.md             # Dokumentasi proyek
+├── ecosystem.config.cjs  # Konfigurasi PM2 untuk manajemen proses
+├── index.js              # Entry point aplikasi
+├── install.sh            # Skrip instalasi otomatis
+├── package.json          # Konfigurasi dependensi proyek
+├── function/             # Kumpulan fungsi utama bot
+│   ├── aiFunction.js     # Fungsi AI dan pemrosesan gambar
+│   ├── delete.js         # Fungsi penghapusan tugas/data
 │   ├── function.js       # Fungsi umum
-│   ├── input.js          # Fungsi pemrosesan input
-│   ├── jadwaltugas.js    # Fungsi pengelolaan jadwal tugas
-│   ├── scrape.js         # Fungsi web scraping
-│   ├── topdf.js          # Fungsi konversi ke PDF
-│   ├── tugas.js          # Fungsi manajemen tugas
-│   └── utils.js          # Fungsi utilitas
-└── temp/                 # Direktori sementara
+│   ├── input.js          # Pemrosesan perintah input
+│   ├── jadwaltugas.js    # Manajemen jadwal tugas
+│   ├── scrape.js         # Web scraping untuk pengambilan informasi
+│   ├── topdf.js          # Konversi konten menjadi PDF
+│   ├── tugas.js          # Manajemen tugas sekolah
+│   └── utils.js          # Fungsi utilitas pendukung
+└── temp/                 # Direktori untuk file sementara
 ```
 
 ---
 
-## 📖 Cara Penggunaan
+## 💬 Cara Penggunaan
 
-Untuk menggunakan bot ini, kirim perintah tertentu ke nomor WhatsApp yang telah terhubung. Perintah dan fungsionalitas spesifik dapat ditemukan di kode dalam direktori `function/`.
+- **Mengirim Perintah:**  
+  Kirim perintah melalui WhatsApp ke nomor yang sudah dikonfigurasi. Daftar perintah dapat dilihat langsung di kode pada direktori `function/`.
+
+- **Integrasi dan Notifikasi:**  
+  Bot akan merespons setiap perintah dengan memberikan notifikasi dan konfirmasi aksi yang dilakukan, memastikan manajemen tugas berjalan dengan lancar.
 
 ---
 
-🚀 **Selamat menggunakan Student-WABot!**
+## 📦 Dependencies
 
+Proyek ini menggunakan beberapa package NPM, antara lain:
+- **@hapi/boom:** Penanganan error HTTP.
+- **@whiskeysockets/baileys:** Integrasi dengan WhatsApp.
+- **adm-zip:** Pengelolaan arsip ZIP.
+- **axios:** Permintaan HTTP.
+- **chalk:** Menambahkan warna pada output terminal.
+- **cheerio:** Parsing HTML untuk web scraping.
+- **date-fns:** Manipulasi tanggal.
+- **dotenv:** Memuat variabel lingkungan.
+- **jimp:** Pemrosesan gambar.
+- **pdf-lib:** Pembuatan dan manipulasi PDF.
+- **qrcode-terminal:** Menampilkan kode QR di terminal.
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi sangat kami hargai! Jika Anda ingin berkontribusi:
+1. Fork repository ini.
+2. Buat branch baru untuk fitur atau perbaikan.
+3. Ajukan pull request dengan penjelasan perubahan.
+
+---
+
+## ⚖️ Lisensi
+
+Saat ini belum ada lisensi resmi. Silakan hubungi [xiryuuGame](https://github.com/xiryuuGame) jika Anda berminat menggunakan atau mendistribusikan ulang proyek ini.
+
+---
+
+Selamat menggunakan Student-WABot! Semoga bot ini dapat membantu mempermudah manajemen tugas sekolah Anda dan meningkatkan produktivitas belajar.
+
+---
+
+*Dikembangkan dengan ❤️ oleh [xiryuuGame](https://github.com/xiryuuGame).*
+
+---
