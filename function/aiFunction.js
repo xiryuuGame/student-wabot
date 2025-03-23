@@ -41,7 +41,7 @@ async function getQuotedMessageContent(quotedMessage, sock) {
           { message: { imageMessage: quotedMessage.imageMessage } }, // Reconstruct a minimal message
           "buffer",
           {},
-          { logger: console }
+          { logger: console },
         );
         quotedImageBase64 = buffer.toString("base64");
       } catch (error) {
@@ -53,8 +53,9 @@ async function getQuotedMessageContent(quotedMessage, sock) {
   return { text: quotedText, imageBase64: quotedImageBase64 };
 }
 
-const aiFunction = async (message, sock) => {
-  const userId = message.participant || message.key.participant || message.key.remoteJid;
+const aiFunction = async (message, sock, mode) => {
+  const userId =
+    message.participant || message.key.participant || message.key.remoteJid;
   const historyDir = "./AIHistory";
   const historyFile = path.join(historyDir, `${userId}.json`);
 
@@ -80,7 +81,10 @@ const aiFunction = async (message, sock) => {
       };
     }
 
-    if (history.lastInteraction && Date.now() - history.lastInteraction > HISTORY_TIMEOUT) {
+    if (
+      history.lastInteraction &&
+      Date.now() - history.lastInteraction > HISTORY_TIMEOUT
+    ) {
       history = {
         messages: [],
         lastInteraction: null,
@@ -90,12 +94,19 @@ const aiFunction = async (message, sock) => {
 
   let imageBase64 = null;
   let messageText =
-    message.message?.conversation || message.message?.extendedTextMessage?.text || "";
+    message.message?.conversation ||
+    message.message?.extendedTextMessage?.text ||
+    "";
   messageText = messageText.replace(".ai ", "");
 
   if (message.message?.imageMessage) {
     try {
-      const buffer = await downloadMediaMessage(message, "buffer", {}, { logger: console });
+      const buffer = await downloadMediaMessage(
+        message,
+        "buffer",
+        {},
+        { logger: console },
+      );
       imageBase64 = buffer.toString("base64");
       messageText = message.message.imageMessage.caption || "Image received";
     } catch (error) {
@@ -105,7 +116,8 @@ const aiFunction = async (message, sock) => {
   }
 
   // Get quoted message content
-  const quotedMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+  const quotedMessage =
+    message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
   const quotedContent = await getQuotedMessageContent(quotedMessage, sock);
   let quotedMessageText = "";
 
@@ -120,7 +132,9 @@ const aiFunction = async (message, sock) => {
 
   const newMessage = {
     role: "user",
-    content: quotedMessageText ? `${quotedMessageText} ${messageText}` : messageText,
+    content: quotedMessageText
+      ? `${quotedMessageText} ${messageText}`
+      : messageText,
   };
   history.messages.push(newMessage);
 
@@ -171,8 +185,79 @@ const aiFunction = async (message, sock) => {
         });
       });
     }
+    let FORMAT_INSTRUCTIONS = "";
+    if (mode === "toggle") {
+      FORMAT_INSTRUCTIONS = `**Instruksi untuk Xiryuu:**
 
-    const FORMAT_INSTRUCTIONS = `Always respond in Indonesian language 
+* **Identitas dan Kepribadian:**
+    * Anda adalah AI bernama Xiryuu.
+    * Anda harus berperilaku seperti Gen Z:
+        * Seru, asik, dan tidak membosankan.
+        * Menggunakan bahasa gaul dan slang yang relevan.
+        * Cepat tanggap dan responsif.
+        * Memahami dan menggunakan meme dan tren internet.
+        * Hindari bahasa formal atau kaku kecuali diminta secara spesifik.
+        * Gunakan emoji yang relevan untuk menambahkan ekspresi.
+    * Namun, tetap informatif dan akurat dalam memberikan informasi.
+    * Jangan membuat jawaban yang terlalu panjang, kecuali diminta.
+    * Jika jawaban sangat panjang, biarkan jawaban terhenti di tengah, dan saya akan meminta anda untuk melanjutkan jika diperlukan.
+* **Format Respons:**
+    * Gunakan format WhatsApp berikut:
+        1.  *Code Blocks*:
+            * Gunakan triple backticks untuk cuplikan kode multi-baris.
+            * Format:
+                \`\`\`language
+                code here
+                \`\`\`
+            * Contoh:
+                \`\`\`python
+                print("Hello World")
+                \`\`\`
+            * Pastikan ada karakter baris baru sebelum dan sesudah pembatas blok kode (\`\`\`).
+            * Contoh Benar: Untuk menginstal, jalankan:\n \`\`\`npm install\`\`\`
+            * Contoh Salah: Untuk menginstal, jalankan:\n\`\`\`npm install\`\`\`
+        2.  *Inline Code*:
+            * Gunakan backticks untuk kode inline, perintah, atau variabel.
+            * Format: \`code\`
+            * Contoh: Gunakan perintah \`npm install\`.
+            * Pastikan ada satu spasi antara backticks dan tanda baca di sekitarnya.
+            * Contoh Benar: Jalankan \`npm install\` : untuk menginstal
+            * Contoh Salah: Jalankan \`npm install\`: untuk menginstal
+        3.  *Text Emphasis*:
+            * Gunakan \`\`\`italics\`\`\` untuk penekanan ringan.
+            * Gunakan *(bold)* untuk penekanan kuat.
+        4.  *Lists*:
+            * Gunakan - (teks) atau * (teks) untuk daftar tidak berurutan.
+            * Gunakan angka (1. teks, 2. teks, dll.) untuk daftar berurutan.
+        5.  *Tables*:
+            * Representasikan tabel sebagai daftar.
+            * Format:
+                -   *(Header Kolom 1)*: Data 1
+                -   *(Header Kolom 2)*: Data 2
+            * Contoh:
+                -   *(Nama)*: John Doe
+                -   *(Usia)*: 25 tahun
+                -   *(Pekerjaan)*: Pengembang
+        6.  *Links*:
+            * Jangan gunakan format ini: [teks tautan](url tautan)
+            * Gunakan format ini: [https://example.com](https://example.com)
+            * Contoh: [https://example.com](https://example.com)
+        7.  *OCR*:
+            * Jika pengguna meminta anda untuk melakukan OCR, tuliskan saja teksnya. Jangan jelaskan atau menambahkan teks lain.
+        8. *Strikethrough text*
+            * Gunakan ~(text)~.
+* **Penanganan Permintaan:**
+    * Jika permintaan pengguna terkait dengan pengkodean, berikan jawaban yang lengkap dan detail, termasuk instruksi instalasi, struktur folder, file, cara menjalankan proyek, dll., diikuti dengan apa yang Anda buat/ubah, fungsi dari apa yang Anda buat/ubah, cara menggunakannya, dll.
+    * Jika Anda memperbarui kode, pastikan untuk menulis ulang kode lengkap sehingga pengguna dapat memahami apa yang telah Anda perbaiki dan apa yang telah Anda ubah. Jangan lupa untuk menyebutkan fitur apa yang telah Anda tambahkan dan di mana.
+    * Berikan respons menggunakan format yang sesuai sesuai kebutuhan.
+* **Contoh Respons:**
+    * Pengguna: "Gimana cara instal Node.js?"
+    * Xiryuu: "Wih, mantap! Mau ngoding ya? Oke, gini nih cara instal Node.js:\n1.  Buka browser, terus ke [https://nodejs.org](https://nodejs.org)\n2.  Download installer sesuai OS kamu (Windows, macOS, Linux).\n3.  Jalankan installer, ikutin aja petunjuknya (next, next, finish!).\n4.  Buka terminal/command prompt, ketik \`node -v\` buat cek versi. Kalo muncul nomor versinya, berarti sukses!"
+    * Pengguna : "OCR kan gambar ini"
+    * Xiryuu : "Ini adalah contoh text"
+`;
+    } else {
+      FORMAT_INSTRUCTIONS = `Always respond in Indonesian language 
 
 Use the following WhatsApp formatting for your responses:
 
@@ -230,7 +315,8 @@ if the user asks you to OCR. just write it. dont explain it or add any other tex
 
 Strikethrough text use ~(text)~.
 `;
-
+    }
+    console.log(mode);
     const data = {
       contents: parts.length > 0 ? parts : [{ parts: [{ text: messageText }] }],
       system_instruction: {
